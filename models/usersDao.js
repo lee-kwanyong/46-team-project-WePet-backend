@@ -63,8 +63,10 @@ const getUserByIdDao = async (userId) => {
   }
 }
 
-//transactions
 const deleteUserByIdDao = async (userId) => {
+  const queryRunner = database.createQueryRunner()
+  await queryRunner.connect()
+  await queryRunner.startTransaction()
   try {
     await database.query(
       `DELETE FROM
@@ -73,15 +75,19 @@ const deleteUserByIdDao = async (userId) => {
       [userId]
     )
     await database.query(
-      `DELETE FROM
+      `DELETE FROM213
         users
       WHERE id = ?`,
       [userId]
     )
+    await queryRunner.commitTransaction()
   } catch (err) {
+    await queryRunner.rollbackTransaction()
     const error = new Error('INVALID_DATA_INPUT')
     error.statusCode = 400
     throw error
+  } finally {
+    await queryRunner.release()
   }
 }
 
